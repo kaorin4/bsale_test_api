@@ -10,9 +10,9 @@ app.use(cors());
 dotenv.config();
 
 app.get('/', (req, res) => {
-    res.send('BSALE TEST API');
+  res.send('BSALE TEST API');
 });
 
 app.listen(port, () => {
-    console.log("Server running on port", port);
+  console.log("Server running on port", port);
 });
