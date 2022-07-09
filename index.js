@@ -13,6 +13,10 @@ app.get('/', (req, res) => {
   res.send('BSALE TEST API');
 });
 
+const categoryRoute = require('./routes/categoryRoute');
+
+app.use('/api/categories', categoryRoute);
+
 app.listen(port, () => {
   console.log("Server running on port", port);
 });
