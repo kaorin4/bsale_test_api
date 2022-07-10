@@ -1,6 +1,7 @@
 const pool = require("../config/dbconfig");
 
 const pageSize = 20;
+const maxPageSize = 50;
 
 const getPagination = (numRecords, offset = 0, limit = pageSize) => {
 
@@ -22,6 +23,11 @@ const getAllProducts = (req, res) => {
   // establish connection
   pool.getConnection((err, connection) => {
 
+    if(err) res.status(404).json({
+      status: "error",
+      error: err
+    });
+
     const conditions = buildConditions(req.query);
 
     connection.query(`SELECT COUNT(*) AS count FROM product WHERE ${conditions.where};`, 
@@ -34,7 +40,11 @@ const getAllProducts = (req, res) => {
         });
 
         const numRecords = countData[0].count;
-        const limit = parseInt(req.query.limit) || pageSize;
+        let limit = parseInt(req.query.limit) || pageSize;
+        // max limit to 50
+        if(limit > maxPageSize){
+          limit = maxPageSize;
+        }
         const offset = parseInt(req.query.offset) || 0;
 
         const orderField = req.query.orderField || "name";
@@ -51,6 +61,7 @@ const getAllProducts = (req, res) => {
             res.status(200).json({
                 status: "success",
                 totalCount: numRecords,
+                totalReturned: data.length,
                 data,
                 pagination: {page, 
                             prevPage,
