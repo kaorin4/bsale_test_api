@@ -22,7 +22,10 @@ const getAllProducts = (req, res) => {
   // establish connection
   pool.getConnection((err, connection) => {
 
-    connection.query("SELECT COUNT(*) AS count FROM product", 
+    const conditions = buildConditions(req.query);
+
+    connection.query(`SELECT COUNT(*) AS count FROM product WHERE ${conditions.where};`, 
+      conditions.values,
       (err, countData) => {
 
         if(err) res.status(409).json({
@@ -31,16 +34,19 @@ const getAllProducts = (req, res) => {
         });
 
         const numRecords = countData[0].count;
-        const limit = Number(req.query.limit) || pageSize;
-        const offset = Number(req.query.offset) || 0;
+        const limit = parseInt(req.query.limit) || pageSize;
+        const offset = parseInt(req.query.offset) || 0;
 
         const orderField = req.query.orderField || "name";
         const orderType = req.query.orderType || "ASC";
 
         let {page, prevPage, nextPage, numberOfPages} = getPagination(numRecords, offset, limit);
 
-        connection.query(`SELECT * FROM product ORDER BY ${orderField} ${orderType} LIMIT ${offset}, ${limit}`, 
-          function (err, data) {
+        let query = `SELECT * FROM product WHERE ${conditions.where} ORDER BY ${orderField} ${orderType} LIMIT ${offset}, ${limit};`;
+
+        connection.query(query, 
+          conditions.values,
+          (err, data) => {
 
             res.status(200).json({
                 status: "success",
@@ -60,73 +66,25 @@ const getAllProducts = (req, res) => {
   });
 };
 
-const getProductsByCategory = (req, res) => {
+const buildConditions = (params) => {
+  let conditionsList = [];
+  let values = [];
 
-  // establish connection
-  pool.getConnection((err, connection) => {
+  if (params.category) {
+    conditionsList.push("category = ?");
+    values.push(params.category);
+  }
 
-    connection.query("SELECT COUNT(*) AS count FROM product WHERE category = ?", 
-      [req.params.id],
-      (err, countData) => {
+  if (params.name) {
+    conditionsList.push("name LIKE ?");
+    values.push("%" + params.name + "%");
+  }
 
-        const numRecords = countData[0].count;
-        const limit = Number(req.query.limit) || pageSize;
-        const offset = Number(req.query.offset) || 0;
-
-        const orderField = req.query.orderField || "name";
-        const orderType = req.query.orderType || "ASC";
-
-        let {page, prevPage, nextPage, numberOfPages} = getPagination(numRecords, offset, limit);
-
-        connection.query(
-          `SELECT * FROM product WHERE category = ? ORDER BY ${orderField} ${orderType} LIMIT ${offset}, ${limit}`,
-          [req.params.id],
-          function (err, data) {
-
-            if(err) res.status(409);
-
-            res.status(200).json({
-              status: "success",
-              totalCount: numRecords,
-              data,
-              pagination: {page, 
-                          prevPage,
-                          nextPage,
-                          limit, 
-                          numberOfPages}
-            });
-          }
-        );
-    });
-
-    // releasing connection
-    connection.release();
-  });
+  return {
+    where: conditionsList.length ? conditionsList.join(' AND ') : '1',
+    values: values
+  };
 }
 
-const getProductsByName = (req, res) => {
-
-  // establish connection
-  pool.getConnection((err, connection) => {
-      
-    const orderField = req.query.orderField || "name";
-    const orderType = (req.query.orderType == "ASC" || req.query.orderType == "DESC") || "ASC";
-
-    connection.query(
-      `SELECT * FROM product WHERE name LIKE '%${req.query.name}%' ORDER BY ${orderField} ${orderType}`,
-      (err, data) => {
-        res.status(200).json({
-          status: "success",
-          totalCount: data?.length,
-          data: data,
-        });
-      }
-    );
-
-    // releasing connection
-    connection.release();
-  });
-}
-
-module.exports = {getAllProducts, getProductsByCategory, getProductsByName};
+module.exports = {getAllProducts};
 
