@@ -14,8 +14,10 @@ app.get('/', (req, res) => {
 });
 
 const categoryRoute = require('./routes/categoryRoute');
+const productRoute = require('./routes/productRoute');
 
 app.use('/api/categories', categoryRoute);
+app.use('/api/products', productRoute);
 
 app.listen(port, () => {
   console.log("Server running on port", port);
