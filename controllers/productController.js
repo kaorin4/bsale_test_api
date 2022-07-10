@@ -3,6 +3,7 @@ const pool = require("../config/dbconfig");
 const pageSize = 20;
 const maxPageSize = 50;
 
+// get pagination and return prevPage offset, nextPage offset, total of pages
 const getPagination = (numRecords, offset = 0, limit = pageSize) => {
 
   const numberOfPages = Math.ceil(numRecords / limit);
@@ -18,7 +19,8 @@ const getPagination = (numRecords, offset = 0, limit = pageSize) => {
   return {page, prevPage, nextPage, numberOfPages};
 }
 
-const getAllProducts = (req, res) => {
+// get list of products
+const getProducts = (req, res) => {
 
   // establish connection
   pool.getConnection((err, connection) => {
@@ -48,7 +50,10 @@ const getAllProducts = (req, res) => {
         const offset = parseInt(req.query.offset) || 0;
 
         const orderField = req.query.orderField || "name";
-        const orderType = req.query.orderType || "ASC";
+        let orderType = req.query.orderType || "ASC";
+        if(orderType !== "ASC" && orderType !== "DESC"){
+          orderType = "ASC";
+        }
 
         let {page, prevPage, nextPage, numberOfPages} = getPagination(numRecords, offset, limit);
 
@@ -77,6 +82,7 @@ const getAllProducts = (req, res) => {
   });
 };
 
+// build query conditions based on params
 const buildConditions = (params) => {
   let conditionsList = [];
   let values = [];
@@ -97,5 +103,5 @@ const buildConditions = (params) => {
   };
 }
 
-module.exports = {getAllProducts};
+module.exports = {getProducts};
 
