@@ -11,7 +11,7 @@ const getPagination = (numRecords, offset = 0, limit = pageSize) => {
   }
 
   const page = Math.ceil((offset+1) / limit);
-  const prevPage = (offset > limit) ? {page: page - 1, offset: offset - limit, limit} : null;
+  const prevPage = (offset >= limit) ? {page: page - 1, offset: offset - limit, limit} : null;
   const nextPage = (page < numberOfPages) ? {page: page + 1, offset: offset + limit, limit} : null;
 
   return {page, prevPage, nextPage, numberOfPages};
